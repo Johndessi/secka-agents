@@ -1,0 +1,15 @@
+{
+  "name": "SECKA.AI",
+  "short_name": "SECKA",
+  "start_url": "/secka-agents/",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#E8B84B",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/Johndessi/secka-agents/main/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
