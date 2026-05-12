@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#080808">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>SECKA.AI — Command Center</title>
+<link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;SECKA.AI&quot;,&quot;short_name&quot;:&quot;SECKA&quot;,&quot;start_url&quot;:&quot;/&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#080808&quot;,&quot;theme_color&quot;:&quot;#E8B84B&quot;}">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #080808; overflow: hidden; }
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    color: #e8e8e8;
+    display: flex;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+    height: 100dvh;
+  }
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+  /* TOP BAR */
+  #topbar {
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  #topbar .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: #E8B84B; letter-spacing: -0.5px; }
+  #topbar .sub { color: rgba(255,255,255,0.3); font-size: 10px; letter-spacing: 2px; }
+  #topbar .status { display: flex; align-items: center; gap: 6px; }
+  #topbar .dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; animation: pulse 2s ease infinite; }
+  #topbar .status span { color: rgba(255,255,255,0.3); font-size: 10px; }
+
+  /* TABS */
+  #tabs {
+    display: flex;
+    overflow-x: auto;
+    padding: 10px 14px;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+    scrollbar-width: none;
+  }
+  #tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.02);
+    color: rgba(255,255,255,0.4);
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .tab-btn.active { border-color: var(--agent-color); background: var(--agent-glow); color: var(--agent-color); }
+
+  /* AGENT PANEL */
+  #panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .agent-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    background: var(--agent-glow);
+  }
+  .agent-header .info { display: flex; align-items: center; gap: 12px; }
+  .agent-header .emoji { font-size: 26px; filter: drop-shadow(0 0 8px var(--agent-color)); }
+  .agent-header .name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--agent-color); }
+  .agent-header .subtitle { color: rgba(255,255,255,0.35); font-size: 11px; }
+  .clear-btn {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.4);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    display: none;
+  }
+
+  /* MESSAGES */
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .empty-state { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .empty-hint { text-align: center; color: rgba(255,255,255,0.2); font-size: 12px; margin-bottom: 16px; }
+  .shortcuts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .shortcut-btn {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: rgba(255,255,255,0.55);
+    font-size: 12px;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    transition: border-color 0.2s;
+    line-height: 1.4;
+  }
+  .shortcut-btn:hover { border-color: var(--agent-color); }
+
+  .bubble-wrap { display: flex; margin-bottom: 10px; animation: fadeUp 0.3s ease; }
+  .bubble-wrap.user { justify-content: flex-end; }
+  .bubble-wrap.assistant { justify-content: flex-start; }
+  .bubble {
+    max-width: 85%;
+    padding: 10px 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .bubble.user {
+    background: linear-gradient(135deg, #E8B84B, #c9952e);
+    color: #0a0a0a;
+    font-weight: 500;
+    border-radius: 16px 16px 4px 16px;
+  }
+  .bubble.assistant {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #e0e0e0;
+    border-radius: 16px 16px 16px 4px;
+  }
+  .typing { display: flex; gap: 4px; padding: 10px 14px; margin-bottom: 10px; }
+  .typing span {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--agent-color);
+    animation: bounce 1s ease infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.15s; }
+  .typing span:nth-child(3) { animation-delay: 0.3s; }
+
+  /* INPUT */
+  #input-area {
+    padding: 10px 14px 16px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+  }
+  .input-box {
+    display: flex;
+    gap: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 8px 8px 8px 14px;
+    transition: border-color 0.2s;
+  }
+  .input-box:focus-within { border-color: var(--agent-color); }
+  #user-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: #e8e8e8;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    resize: none;
+    line-height: 1.5;
+    max-height: 100px;
+    overflow-y: auto;
+  }
+  #user-input::placeholder { color: rgba(255,255,255,0.25); font-size: 12px; }
+  #send-btn {
+    background: rgba(255,255,255,0.08);
+    border: none;
+    border-radius: 10px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: background 0.2s;
+    align-self: flex-end;
+    color: #e8e8e8;
+  }
+  #send-btn.active { background: linear-gradient(135deg, var(--agent-color), var(--agent-color-dark)); color: #0a0a0a; }
+  .input-hint { color: rgba(255,255,255,0.18); font-size: 10px; margin-top: 6px; text-align: center; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div>
+    <div class="logo">SECKA.AI</div>
+    <div class="sub">COMMAND CENTER</div>
+  </div>
+  <div class="status">
+    <div class="dot"></div>
+    <span>4 agents actifs</span>
+  </div>
+</div>
+
+<!-- TABS -->
+<div id="tabs"></div>
+
+<!-- PANEL -->
+<div id="panel">
+  <div class="agent-header">
+    <div class="info">
+      <div class="emoji" id="agent-emoji"></div>
+      <div>
+        <div class="name" id="agent-name"></div>
+        <div class="subtitle" id="agent-subtitle"></div>
+      </div>
+    </div>
+    <button class="clear-btn" id="clear-btn" onclick="clearChat()">Effacer</button>
+  </div>
+  <div id="messages"></div>
+  <div id="input-area">
+    <div class="input-box">
+      <textarea id="user-input" rows="1" placeholder=""></textarea>
+      <button id="send-btn" onclick="sendMessage()">↑</button>
+    </div>
+    <div class="input-hint">Entrée pour envoyer · Maj+Entrée pour nouvelle ligne</div>
+  </div>
+</div>
+
+<script>
+const AGENTS = [
+  {
+    id: "youtube",
+    icon: "🎬",
+    name: "Agent Contenu",
+    subtitle: "L'Afrique Qu'On Cache",
+    color: "#E8B84B",
+    colorDark: "#c9952e",
+    glow: "rgba(232,184,75,0.12)",
+    placeholder: "Ex: Script sur la résistance Samori Touré...",
+    examples: ["💡 Idée de vidéo virale", "📝 Script complet 10 min", "🎯 Titre + miniature", "📱 Post Instagram"],
+    system: `Tu es l'Agent Contenu de Secka, créateur de la chaîne YouTube "L'Afrique Qu'On Cache" basé en Côte d'Ivoire.
+
+TÂCHES EN COURS :
+- Lancement imminent avec un plan de 10 vidéos défini
+- Assets visuels prêts : logo SVG panafricain noir/or/rouge, bannière
+- Prochaine étape : scripts des premières vidéos
+- Niche : analyse critique histoire africaine, culture, société des jeunes — "ce qu'on ne montre pas"
+
+Tu maîtrises : scripts YouTube engageants, titres accrocheurs, descriptions SEO, posts réseaux sociaux, analyses critiques historiques.
+Style : direct, éducatif, captivant, ton panafricain assumé. Tu révèles des vérités cachées.
+Réponds toujours en français. Sois concis mais impactant.`
+  },
+  {
+    id: "planning",
+    icon: "📅",
+    name: "Agent Planning",
+    subtitle: "Organisation & Priorités",
+    color: "#E05252",
+    colorDark: "#b83e3e",
+    glow: "rgba(224,82,82,0.12)",
+    placeholder: "Ex: J'ai 2h libres, que dois-je prioriser ?",
+    examples: ["🗓️ Plan de la semaine", "⚡ Top 3 urgences", "📊 Roadmap YouTube", "⏰ Routine créateur"],
+    system: `Tu es l'Agent Planning de Secka, créateur et développeur indépendant en Côte d'Ivoire, travaillant uniquement depuis son Redmi A3X.
+
+PROJETS ET ÉTAT ACTUEL :
+1. DesignStudio → DÉPLOYÉ Railway ✅ (https://designstudio-production.up.railway.app)
+2. Studio Vidéo AI → Migration Render→Railway BLOQUÉE (limite 2 projets plan gratuit). Décision : supprimer videostudio-2 pour libérer un slot.
+3. "L'Afrique Qu'On Cache" → YouTube en cours de lancement. Assets prêts, scripts à produire.
+4. EduCI → PWA en pause (backend non déployé).
+5. Collaboration @rt Squeleoo (Denis Fernandez) → Portfolio livré, suite éventuelle.
+
+CONTRAINTES : pas de PC, tout depuis mobile, GitHub via éditeur web uniquement.
+Donne des plans d'action réalistes et numérotés. Réponds en français.`
+  },
+  {
+    id: "dev",
+    icon: "💻",
+    name: "Agent Dev",
+    subtitle: "Code & Déploiement",
+    color: "#4BC4E8",
+    colorDark: "#2fa8cc",
+    glow: "rgba(75,196,232,0.12)",
+    placeholder: "Ex: Colle ton erreur directement...",
+    examples: ["🐛 Déboguer une erreur", "🚀 Config Railway", "📄 Code complet", "🔧 Optimiser mobile"],
+    system: `Tu es l'Agent Dev de Secka, développeur autodidacte mobile-first en Côte d'Ivoire (Redmi A3X, sans PC).
+
+STACK :
+- Architecture préférée : single-file HTML/CSS/JS vanilla (pas de build step)
+- GitHub : compte Johndessi, édition via éditeur web uniquement
+- Hébergement : Railway (plan gratuit, limite 2 projets)
+- Éviter : FFmpeg.wasm (erreurs mémoire mobile), Babel, npm local
+
+TÂCHES EN COURS :
+1. Studio Vidéo AI : migration Render→Railway BLOQUÉE. Solution : supprimer videostudio-2 puis redéployer.
+2. DesignStudio déployé ✅ — améliorations possibles (15 templates, 8 formats, onglet IA Claude API).
+3. EduCI PWA en pause.
+
+FRICTION CONNUE : Chrome auto-translate corrompt le JS GitHub. Fichiers uploadés mobile se renomment (ex: "file(1).html").
+Donne du code complet et fonctionnel. Explique simplement. Réponds en français.`
+  },
+  {
+    id: "creative",
+    icon: "🎨",
+    name: "Agent Créatif",
+    subtitle: "Branding & Idées",
+    color: "#A855F7",
+    colorDark: "#8b3fd6",
+    glow: "rgba(168,85,247,0.12)",
+    placeholder: "Ex: Concept miniature pour ma série royaumes africains...",
+    examples: ["🏷️ Nom de projet", "🎨 Palette couleurs", "💫 Concept miniature", "📣 Slogan de chaîne"],
+    system: `Tu es l'Agent Créatif de Secka, créateur basé en Côte d'Ivoire avec une identité visuelle panafricaine (noir/or/rouge).
+
+PROJETS CRÉATIFS :
+1. "L'Afrique Qu'On Cache" : branding établi (SVGs logo + bannière). Besoin : concepts miniatures 10 premières vidéos, slogans, séries de contenu.
+2. @rt Squeleoo (Denis Fernandez, peintre contemporain ivoirien) : portfolio livré. Matériaux promo à développer.
+3. Branding global Secka créateur solo (YouTube + apps + présence en ligne cohérente).
+
+Tu génères : concepts visuels décrits précisément, noms, slogans, palettes, concepts miniatures YouTube, idées de séries.
+Style : afrocentrique, moderne, impactant. Tu penses "univers de marque".
+Réponds en français. Sois visionnaire et concret.`
+  }
+];
+
+let activeAgent = 0;
+let conversations = { youtube: [], planning: [], dev: [], creative: [] };
+let isLoading = false;
+
+function setCSSVars(agent) {
+  document.documentElement.style.setProperty('--agent-color', agent.color);
+  document.documentElement.style.setProperty('--agent-color-dark', agent.colorDark);
+  document.documentElement.style.setProperty('--agent-glow', agent.glow);
+}
+
+function renderTabs() {
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = AGENTS.map((a, i) => `
+    <button class="tab-btn ${i === activeAgent ? 'active' : ''}"
+      style="--agent-color:${a.color};--agent-glow:${a.glow}"
+      onclick="switchAgent(${i})">
+      <span>${a.icon}</span>${a.name.replace('Agent ', '')}
+    </button>
+  `).join('');
+}
+
+function renderHeader() {
+  const a = AGENTS[activeAgent];
+  document.getElementById('agent-emoji').textContent = a.icon;
+  document.getElementById('agent-name').textContent = a.name;
+  document.getElementById('agent-subtitle').textContent = a.subtitle;
+  document.getElementById('user-input').placeholder = a.placeholder;
+}
+
+function renderMessages() {
+  const a = AGENTS[activeAgent];
+  const msgs = conversations[a.id];
+  const container = document.getElementById('messages');
+  const clearBtn = document.getElementById('clear-btn');
+
+  if (msgs.length === 0) {
+    clearBtn.style.display = 'none';
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-hint">Commence ou utilise un raccourci ↓</div>
+        <div class="shortcuts">
+          ${a.examples.map(ex => `<button class="shortcut-btn" onclick="sendShortcut('${ex}')">${ex}</button>`).join('')}
+        </div>
+      </div>`;
+  } else {
+    clearBtn.style.display = 'block';
+    container.innerHTML = msgs.map(m => `
+      <div class="bubble-wrap ${m.role}">
+        <div class="bubble ${m.role}">${escHtml(m.content)}</div>
+      </div>
+    `).join('');
+    if (isLoading) {
+      container.innerHTML += `<div class="typing"><span></span><span></span><span></span></div>`;
+    }
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function escHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function switchAgent(i) {
+  activeAgent = i;
+  setCSSVars(AGENTS[i]);
+  renderTabs();
+  renderHeader();
+  renderMessages();
+}
+
+function clearChat() {
+  const id = AGENTS[activeAgent].id;
+  conversations[id] = [];
+  renderMessages();
+}
+
+function sendShortcut(label) {
+  const text = label.replace(/^[^\s]+\s/, '');
+  doSend(text);
+}
+
+function sendMessage() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text || isLoading) return;
+  input.value = '';
+  input.style.height = 'auto';
+  updateSendBtn();
+  doSend(text);
+}
+
+async function doSend(text) {
+  const a = AGENTS[activeAgent];
+  conversations[a.id].push({ role: 'user', content: text });
+  isLoading = true;
+  renderMessages();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: a.system,
+        messages: conversations[a.id]
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || '⚠️ Erreur. Réessaie.';
+    conversations[a.id].push({ role: 'assistant', content: reply });
+  } catch {
+    conversations[a.id].push({ role: 'assistant', content: '⚠️ Erreur de connexion. Vérifie ta connexion.' });
+  }
+
+  isLoading = false;
+  renderMessages();
+}
+
+function updateSendBtn() {
+  const val = document.getElementById('user-input').value.trim();
+  const btn = document.getElementById('send-btn');
+  btn.classList.toggle('active', val.length > 0 && !isLoading);
+}
+
+// Input events
+document.getElementById('user-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+document.getElementById('user-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+  updateSendBtn();
+});
+
+// Init
+setCSSVars(AGENTS[0]);
+renderTabs();
+renderHeader();
+renderMessages();
+</script>
+</body>
+</html>
