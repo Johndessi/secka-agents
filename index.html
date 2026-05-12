@@ -484,6 +484,9 @@ setCSSVars(AGENTS[0]);
 renderTabs();
 renderHeader();
 renderMessages();
+ if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/secka-agents/sw.js');
+ }
 </script>
 </body>
 </html>
