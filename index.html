@@ -1,447 +1,541 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="theme-color" content="#080808">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SECKA.AI — Command Center</title>
- <link rel="manifest" href="/secka-agents/manifest.json">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; background: #080808; overflow: hidden; }
-  body {
-    font-family: 'JetBrains Mono', monospace;
-    color: #e8e8e8;
-    display: flex;
-    flex-direction: column;
-    max-width: 480px;
-    margin: 0 auto;
-    height: 100dvh;
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --gold: #F5C842;
+    --gold2: #E8A800;
+    --bg: #0A0A0A;
+    --surface: #141414;
+    --surface2: #1C1C1C;
+    --border: #2A2A2A;
+    --text: #F0F0F0;
+    --muted: #888;
   }
-  ::-webkit-scrollbar { width: 3px; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
 
-  /* TOP BAR */
-  #topbar {
-    padding: 14px 18px 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
+  /* HEADER */
+  header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(10px); z-index: 100;
   }
-  #topbar .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: #E8B84B; letter-spacing: -0.5px; }
-  #topbar .sub { color: rgba(255,255,255,0.3); font-size: 10px; letter-spacing: 2px; }
-  #topbar .status { display: flex; align-items: center; gap: 6px; }
-  #topbar .dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; animation: pulse 2s ease infinite; }
-  #topbar .status span { color: rgba(255,255,255,0.3); font-size: 10px; }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 36px; height: 36px; background: var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .logo-text { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+  .logo-text span { color: var(--gold); }
+  .badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 11px; color: var(--muted); }
 
-  /* TABS */
-  #tabs {
-    display: flex;
-    overflow-x: auto;
-    padding: 10px 14px;
-    gap: 8px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    flex-shrink: 0;
-    scrollbar-width: none;
+  /* AGENT TABS */
+  .tabs { display: flex; overflow-x: auto; gap: 8px; padding: 16px 20px; border-bottom: 1px solid var(--border); scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0; padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--surface); cursor: pointer; font-size: 13px; color: var(--muted);
+    transition: all 0.2s; white-space: nowrap;
   }
-  #tabs::-webkit-scrollbar { display: none; }
-  .tab-btn {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.07);
-    background: rgba(255,255,255,0.02);
-    color: rgba(255,255,255,0.4);
-    cursor: pointer;
-    font-size: 12px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 600;
-    white-space: nowrap;
-    transition: all 0.2s;
-  }
-  .tab-btn.active { border-color: var(--agent-color); background: var(--agent-glow); color: var(--agent-color); }
+  .tab.active { background: var(--gold); color: #000; border-color: var(--gold); font-weight: 600; }
+  .tab:hover:not(.active) { border-color: var(--gold); color: var(--gold); }
 
   /* AGENT PANEL */
-  #panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .agent-panel { display: none; padding: 20px; flex-direction: column; gap: 16px; }
+  .agent-panel.active { display: flex; }
 
-  .agent-header {
-    padding: 14px 16px 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-    background: var(--agent-glow);
-  }
-  .agent-header .info { display: flex; align-items: center; gap: 12px; }
-  .agent-header .emoji { font-size: 26px; filter: drop-shadow(0 0 8px var(--agent-color)); }
-  .agent-header .name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--agent-color); }
-  .agent-header .subtitle { color: rgba(255,255,255,0.35); font-size: 11px; }
-  .clear-btn {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.4);
-    border-radius: 8px;
-    padding: 5px 10px;
-    font-size: 11px;
-    cursor: pointer;
-    font-family: 'JetBrains Mono', monospace;
-    display: none;
-  }
+  .agent-header { display: flex; align-items: flex-start; gap: 12px; }
+  .agent-avatar { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .agent-info h2 { font-size: 18px; font-weight: 700; }
+  .agent-info p { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
-  /* MESSAGES */
-  #messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 14px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+  /* QUICK COMMANDS */
+  .section-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .quick-cmds { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cmd-btn {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface); font-size: 12px; color: var(--text); cursor: pointer;
+    transition: all 0.2s;
   }
-  .empty-state { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-  .empty-hint { text-align: center; color: rgba(255,255,255,0.2); font-size: 12px; margin-bottom: 16px; }
-  .shortcuts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .shortcut-btn {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 10px;
-    padding: 10px 12px;
-    color: rgba(255,255,255,0.55);
-    font-size: 12px;
-    cursor: pointer;
-    text-align: left;
-    font-family: 'JetBrains Mono', monospace;
-    transition: border-color 0.2s;
-    line-height: 1.4;
-  }
-  .shortcut-btn:hover { border-color: var(--agent-color); }
+  .cmd-btn:hover { border-color: var(--gold); color: var(--gold); }
 
-  .bubble-wrap { display: flex; margin-bottom: 10px; animation: fadeUp 0.3s ease; }
-  .bubble-wrap.user { justify-content: flex-end; }
-  .bubble-wrap.assistant { justify-content: flex-start; }
-  .bubble {
-    max-width: 85%;
-    padding: 10px 14px;
-    font-size: 13px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    word-break: break-word;
+  /* CHAT */
+  .chat-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    height: 340px; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
   }
-  .bubble.user {
-    background: linear-gradient(135deg, #E8B84B, #c9952e);
-    color: #0a0a0a;
-    font-weight: 500;
-    border-radius: 16px 16px 4px 16px;
+  .chat-box::-webkit-scrollbar { width: 4px; }
+  .chat-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .msg { display: flex; gap: 10px; align-items: flex-start; }
+  .msg.user { flex-direction: row-reverse; }
+  .msg-bubble {
+    max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.5;
+    background: var(--surface2); color: var(--text);
   }
-  .bubble.assistant {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.08);
-    color: #e0e0e0;
-    border-radius: 16px 16px 16px 4px;
-  }
-  .typing { display: flex; gap: 4px; padding: 10px 14px; margin-bottom: 10px; }
-  .typing span {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--agent-color);
-    animation: bounce 1s ease infinite;
-  }
-  .typing span:nth-child(2) { animation-delay: 0.15s; }
-  .typing span:nth-child(3) { animation-delay: 0.3s; }
+  .msg.user .msg-bubble { background: var(--gold); color: #000; font-weight: 500; }
+  .msg-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; background: var(--surface2); }
+
+  .typing { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: var(--surface2); border-radius: 12px; width: fit-content; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); animation: bounce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
 
   /* INPUT */
-  #input-area {
-    padding: 10px 14px 16px;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    flex-shrink: 0;
+  .input-row { display: flex; gap: 10px; }
+  .chat-input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; color: var(--text); font-size: 14px; resize: none; height: 48px;
+    font-family: inherit; transition: border-color 0.2s;
   }
-  .input-box {
-    display: flex;
-    gap: 8px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 14px;
-    padding: 8px 8px 8px 14px;
-    transition: border-color 0.2s;
+  .chat-input:focus { outline: none; border-color: var(--gold); }
+  .send-btn {
+    width: 48px; height: 48px; border-radius: 10px; background: var(--gold); border: none;
+    color: #000; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.2s; flex-shrink: 0;
   }
-  .input-box:focus-within { border-color: var(--agent-color); }
-  #user-input {
-    flex: 1;
-    background: none;
-    border: none;
-    outline: none;
-    color: #e8e8e8;
-    font-size: 13px;
-    font-family: 'JetBrains Mono', monospace;
-    resize: none;
-    line-height: 1.5;
-    max-height: 100px;
-    overflow-y: auto;
-  }
-  #user-input::placeholder { color: rgba(255,255,255,0.25); font-size: 12px; }
-  #send-btn {
-    background: rgba(255,255,255,0.08);
-    border: none;
-    border-radius: 10px;
-    width: 36px;
-    height: 36px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    flex-shrink: 0;
-    transition: background 0.2s;
-    align-self: flex-end;
-    color: #e8e8e8;
-  }
-  #send-btn.active { background: linear-gradient(135deg, var(--agent-color), var(--agent-color-dark)); color: #0a0a0a; }
-  .input-hint { color: rgba(255,255,255,0.18); font-size: 10px; margin-top: 6px; text-align: center; }
+  .send-btn:hover { opacity: 0.85; }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-  @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+  /* WELCOME */
+  .welcome {
+    text-align: center; padding: 40px 20px;
+    color: var(--muted); font-size: 14px;
+  }
+  .welcome .emoji { font-size: 36px; margin-bottom: 12px; }
+  .welcome strong { color: var(--gold); }
+
+  /* COPY BTN */
+  .copy-btn {
+    font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); cursor: pointer; margin-top: 6px;
+    display: inline-block; transition: all 0.2s;
+  }
+  .copy-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* GUIDE */
+  .guide-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+  }
+  .guide-card h4 { font-size: 13px; color: var(--gold); margin-bottom: 8px; }
+  .guide-card p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .guide-card code { background: var(--surface2); padding: 2px 6px; border-radius: 4px; color: var(--text); font-size: 11px; }
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
-<div id="topbar">
-  <div>
-    <div class="logo">SECKA.AI</div>
-    <div class="sub">COMMAND CENTER</div>
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div class="logo-text">SECKA<span>.AI</span></div>
   </div>
-  <div class="status">
-    <div class="dot"></div>
-    <span>4 agents actifs</span>
+  <div class="badge">6 Agents actifs</div>
+</header>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" onclick="switchAgent('contenu')">🎬 Contenu</div>
+  <div class="tab" onclick="switchAgent('johnny')">✍️ Johnny-Auteur</div>
+  <div class="tab" onclick="switchAgent('dev')">💻 Dev</div>
+  <div class="tab" onclick="switchAgent('educi')">🎓 EduCI</div>
+  <div class="tab" onclick="switchAgent('planning')">📅 Planning</div>
+  <div class="tab" onclick="switchAgent('branding')">🎨 Branding</div>
+</div>
+
+<!-- ===== AGENT CONTENU ===== -->
+<div class="agent-panel active" id="panel-contenu">
+  <div class="agent-header">
+    <div class="agent-avatar" style="background:#1A1A00;">🎬</div>
+    <div class="agent-info">
+      <h2>Agent Contenu — AppsBuilder</h2>
+      <p>Scripts TikTok · YouTube · Facebook · Titres · Hashtags</p>
+    </div>
+  </div>
+  <div class="guide-card">
+    <h4>💡 Comment l'utiliser</h4>
+    <p>Tape un sujet et il génère un script complet. Exemples :<br>
+    <code>Script TikTok 60s sur GitHub pour débutants</code><br>
+    <code>Donne-moi 5 idées vidéo pour cette semaine</code><br>
+    <code>Script YouTube 3 min : pourquoi Railway est gratuit</code></p>
+  </div>
+  <div>
+    <div class="section-label">Commandes rapides</div>
+    <div class="quick-cmds">
+      <button class="cmd-btn" onclick="fillInput('contenu','Script TikTok 60s : C\'est quoi GitHub ?')">📱 Script TikTok GitHub</button>
+      <button class="cmd-btn" onclick="fillInput('contenu','5 idées vidéo AppsBuilder pour cette semaine')">💡 5 idées semaine</button>
+      <button class="cmd-btn" onclick="fillInput('contenu','Script YouTube 3 min : pourquoi Railway est gratuit')">🎥 Script Railway</button>
+      <button class="cmd-btn" onclick="fillInput('contenu','Légende + 5 hashtags pour une vidéo sur le coding mobile')">🏷️ Hashtags viral</button>
+    </div>
+  </div>
+  <div class="chat-box" id="chat-contenu">
+    <div class="welcome"><div class="emoji">🎬</div><strong>Agent Contenu AppsBuilder</strong> prêt.<br>Dis-moi quel contenu créer.</div>
+  </div>
+  <div class="input-row">
+    <textarea class="chat-input" id="input-contenu" placeholder="Ex: Script TikTok 60s sur GitHub..." rows="1"></textarea>
+    <button class="send-btn" onclick="sendMessage('contenu')">➤</button>
   </div>
 </div>
 
-<!-- TABS -->
-<div id="tabs"></div>
-
-<!-- PANEL -->
-<div id="panel">
+<!-- ===== AGENT JOHNNY ===== -->
+<div class="agent-panel" id="panel-johnny">
   <div class="agent-header">
-    <div class="info">
-      <div class="emoji" id="agent-emoji"></div>
-      <div>
-        <div class="name" id="agent-name"></div>
-        <div class="subtitle" id="agent-subtitle"></div>
-      </div>
+    <div class="agent-avatar" style="background:#1A001A;">✍️</div>
+    <div class="agent-info">
+      <h2>Agent Johnny-Auteur</h2>
+      <p>Slam · Reels Instagram · Ke-Si-Ya · Identité africaine</p>
     </div>
-    <button class="clear-btn" id="clear-btn" onclick="clearChat()">Effacer</button>
   </div>
-  <div id="messages"></div>
-  <div id="input-area">
-    <div class="input-box">
-      <textarea id="user-input" rows="1" placeholder=""></textarea>
-      <button id="send-btn" onclick="sendMessage()">↑</button>
+  <div class="guide-card">
+    <h4>💡 Comment l'utiliser</h4>
+    <p>Crée du contenu littéraire pour @johnny_auteur. Exemples :<br>
+    <code>Poème slam sur l'identité africaine 60s</code><br>
+    <code>Légende Reel pour Appelez-moi Kadjiz</code><br>
+    <code>3 idées Reels cette semaine</code></p>
+  </div>
+  <div>
+    <div class="section-label">Commandes rapides</div>
+    <div class="quick-cmds">
+      <button class="cmd-btn" onclick="fillInput('johnny','Slam 60 secondes : l\'identité africaine face au monde moderne')">🎤 Slam identité</button>
+      <button class="cmd-btn" onclick="fillInput('johnny','Légende Instagram pour un Reel sur Ke-Si-Ya Tome I')">📖 Légende Ke-Si-Ya</button>
+      <button class="cmd-btn" onclick="fillInput('johnny','3 idées de Reels pour cette semaine johnny_auteur')">💡 3 idées Reels</button>
+      <button class="cmd-btn" onclick="fillInput('johnny','Texte court percutant sur pourquoi on ne lit plus en Afrique')">📚 Lecture en Afrique</button>
     </div>
-    <div class="input-hint">Entrée pour envoyer · Maj+Entrée pour nouvelle ligne</div>
+  </div>
+  <div class="chat-box" id="chat-johnny">
+    <div class="welcome"><div class="emoji">✍️</div><strong>Agent Johnny-Auteur</strong> prêt.<br>Littérature, slam, identité africaine.</div>
+  </div>
+  <div class="input-row">
+    <textarea class="chat-input" id="input-johnny" placeholder="Ex: Poème slam 60s sur l'Afrique..." rows="1"></textarea>
+    <button class="send-btn" onclick="sendMessage('johnny')">➤</button>
+  </div>
+</div>
+
+<!-- ===== AGENT DEV ===== -->
+<div class="agent-panel" id="panel-dev">
+  <div class="agent-header">
+    <div class="agent-avatar" style="background:#001A0A;">💻</div>
+    <div class="agent-info">
+      <h2>Agent Dev</h2>
+      <p>EduCI · Vercel · GitHub · Node.js · Déploiement mobile</p>
+    </div>
+  </div>
+  <div class="guide-card">
+    <h4>💡 Comment l'utiliser</h4>
+    <p>Aide au code et déploiement depuis mobile. Exemples :<br>
+    <code>Bug dans mon server.js — voici l'erreur : ...</code><br>
+    <code>Comment ajouter un nouveau niveau dans EduCI</code><br>
+    <code>Explique-moi ce code ligne par ligne</code></p>
+  </div>
+  <div>
+    <div class="section-label">Commandes rapides</div>
+    <div class="quick-cmds">
+      <button class="cmd-btn" onclick="fillInput('dev','Comment ajouter la classe 1ère A dans EduCI index.html ?')">🎓 Ajouter classe EduCI</button>
+      <button class="cmd-btn" onclick="fillInput('dev','Mon déploiement Vercel échoue, que vérifier ?')">🔧 Debug Vercel</button>
+      <button class="cmd-btn" onclick="fillInput('dev','Comment intégrer CinetPay dans une app Node.js ?')">💳 CinetPay</button>
+      <button class="cmd-btn" onclick="fillInput('dev','Checklist pour passer EduCI en PWA sur Google Play')">📱 PWA Google Play</button>
+    </div>
+  </div>
+  <div class="chat-box" id="chat-dev">
+    <div class="welcome"><div class="emoji">💻</div><strong>Agent Dev</strong> prêt.<br>Code, bugs, déploiement — tout depuis mobile.</div>
+  </div>
+  <div class="input-row">
+    <textarea class="chat-input" id="input-dev" placeholder="Ex: Bug dans mon server.js..." rows="1"></textarea>
+    <button class="send-btn" onclick="sendMessage('dev')">➤</button>
+  </div>
+</div>
+
+<!-- ===== AGENT EDUCI ===== -->
+<div class="agent-panel" id="panel-educi">
+  <div class="agent-header">
+    <div class="agent-avatar" style="background:#001A1A;">🎓</div>
+    <div class="agent-info">
+      <h2>Agent EduCI</h2>
+      <p>Support élèves · Curricula DPFC · Stratégie plateforme</p>
+    </div>
+  </div>
+  <div class="guide-card">
+    <h4>💡 Comment l'utiliser</h4>
+    <p>Gère tout ce qui concerne EduCI. Exemples :<br>
+    <code>Rédige un message de bienvenue pour les élèves</code><br>
+    <code>Comment améliorer l'engagement sur EduCI ?</code><br>
+    <code>Prépare une réponse FAQ pour les parents d'élèves</code></p>
+  </div>
+  <div>
+    <div class="section-label">Commandes rapides</div>
+    <div class="quick-cmds">
+      <button class="cmd-btn" onclick="fillInput('educi','Rédige un message de bienvenue pour les nouveaux abonnés EduCI')">👋 Message bienvenue</button>
+      <button class="cmd-btn" onclick="fillInput('educi','Stratégie pour atteindre 100 abonnés payants EduCI ce mois')">🎯 100 abonnés</button>
+      <button class="cmd-btn" onclick="fillInput('educi','FAQ réponses aux questions fréquentes des parents sur EduCI')">❓ FAQ parents</button>
+      <button class="cmd-btn" onclick="fillInput('educi','Plan marketing EduCI pour les lycées d\'Abidjan')">📢 Marketing lycées</button>
+    </div>
+  </div>
+  <div class="chat-box" id="chat-educi">
+    <div class="welcome"><div class="emoji">🎓</div><strong>Agent EduCI</strong> prêt.<br>Support, stratégie, communication élèves.</div>
+  </div>
+  <div class="input-row">
+    <textarea class="chat-input" id="input-educi" placeholder="Ex: Message bienvenue pour les élèves..." rows="1"></textarea>
+    <button class="send-btn" onclick="sendMessage('educi')">➤</button>
+  </div>
+</div>
+
+<!-- ===== AGENT PLANNING ===== -->
+<div class="agent-panel" id="panel-planning">
+  <div class="agent-header">
+    <div class="agent-avatar" style="background:#1A0A00;">📅</div>
+    <div class="agent-info">
+      <h2>Agent Planning</h2>
+      <p>Semaine · Priorités · Calendrier contenu · Objectifs</p>
+    </div>
+  </div>
+  <div class="guide-card">
+    <h4>💡 Comment l'utiliser</h4>
+    <p>Organise ta semaine et tes priorités. Exemples :<br>
+    <code>Planifie ma semaine : 3 vidéos AppsBuilder + 3 Reels Johnny</code><br>
+    <code>Quelles sont mes 3 priorités absolues cette semaine ?</code><br>
+    <code>Planning contenu du mois de juin</code></p>
+  </div>
+  <div>
+    <div class="section-label">Commandes rapides</div>
+    <div class="quick-cmds">
+      <button class="cmd-btn" onclick="fillInput('planning','Planifie ma semaine : vidéos AppsBuilder + Reels Johnny + EduCI')">📅 Planning semaine</button>
+      <button class="cmd-btn" onclick="fillInput('planning','Mes 3 priorités absolues pour avancer vers la liberté financière')">🎯 Top 3 priorités</button>
+      <button class="cmd-btn" onclick="fillInput('planning','Planning contenu juin : AppsBuilder + Johnny-Auteur')">🗓️ Planning juin</button>
+      <button class="cmd-btn" onclick="fillInput('planning','Comment mieux gérer mon temps depuis mobile uniquement ?')">⏱️ Gestion temps mobile</button>
+    </div>
+  </div>
+  <div class="chat-box" id="chat-planning">
+    <div class="welcome"><div class="emoji">📅</div><strong>Agent Planning</strong> prêt.<br>Organisation, priorités, calendrier.</div>
+  </div>
+  <div class="input-row">
+    <textarea class="chat-input" id="input-planning" placeholder="Ex: Planifie ma semaine..." rows="1"></textarea>
+    <button class="send-btn" onclick="sendMessage('planning')">➤</button>
+  </div>
+</div>
+
+<!-- ===== AGENT BRANDING ===== -->
+<div class="agent-panel" id="panel-branding">
+  <div class="agent-header">
+    <div class="agent-avatar" style="background:#1A001A;">🎨</div>
+    <div class="agent-info">
+      <h2>Agent Branding</h2>
+      <p>Identité visuelle · Bio · Pitches · Noir & Or</p>
+    </div>
+  </div>
+  <div class="guide-card">
+    <h4>💡 Comment l'utiliser</h4>
+    <p>Renforce tes marques AppsBuilder et Johnny-Auteur. Exemples :<br>
+    <code>Rédige ma bio Instagram @johnny_auteur</code><br>
+    <code>Pitch AppsBuilder en 30 secondes pour attirer des clients</code><br>
+    <code>Idées de nom pour ma formation coding mobile</code></p>
+  </div>
+  <div>
+    <div class="section-label">Commandes rapides</div>
+    <div class="quick-cmds">
+      <button class="cmd-btn" onclick="fillInput('branding','Rédige ma bio Instagram @johnny_auteur percutante')">📝 Bio Instagram</button>
+      <button class="cmd-btn" onclick="fillInput('branding','Pitch AppsBuilder 30 secondes pour attirer des clients formation')">🎤 Pitch AppsBuilder</button>
+      <button class="cmd-btn" onclick="fillInput('branding','Slogan fort pour EduCI qui accroche les lycéens ivoiriens')">✨ Slogan EduCI</button>
+      <button class="cmd-btn" onclick="fillInput('branding','Description YouTube pour ma chaîne AppsBuilder')">📺 Description YouTube</button>
+    </div>
+  </div>
+  <div class="chat-box" id="chat-branding">
+    <div class="welcome"><div class="emoji">🎨</div><strong>Agent Branding</strong> prêt.<br>Identité, pitches, communication de marque.</div>
+  </div>
+  <div class="input-row">
+    <textarea class="chat-input" id="input-branding" placeholder="Ex: Bio Instagram johnny_auteur..." rows="1"></textarea>
+    <button class="send-btn" onclick="sendMessage('branding')">➤</button>
   </div>
 </div>
 
 <script>
-const AGENTS = [
-  {
-    id: "youtube",
-    icon: "🎬",
-    name: "Agent Contenu",
-    subtitle: "@AppsBuilder CI",
-    color: "#E8B84B",
-    colorDark: "#c9952e",
-    glow: "rgba(232,184,75,0.12)",
-    placeholder: "Ex: Script sur coder depuis un téléphone Android...",
-    examples: ["🎬 Générer 1 script", "📅 Planning semaine", "💡 Idées de vidéos", "🏷️ Titre + Description + Tags"],
-    system: `Tu es l'Agent Contenu de Secka Dessi, créateur @AppsBuilder basé à Abidjan, Côte d'Ivoire. Il crée du contenu tech mobile-first en français pour TikTok, YouTube Shorts et Facebook. Tout son contenu montre comment coder, déployer et monétiser des apps depuis un téléphone Android sans PC, depuis Abidjan.
+const SYSTEMS = {
+  contenu: `Tu es l'Agent Contenu de Secka Dessi, créateur @AppsBuilder basé à Abidjan, Côte d'Ivoire. Tu travailles EXCLUSIVEMENT depuis un téléphone Redmi A3X — pas de PC.
 
-TÂCHES :
-- Générer des scripts vidéo complets de 60 à 90 secondes
-- Créer des titres accrocheurs et des descriptions YouTube optimisées
-- Proposer 5 hashtags stratégiques
-- Construire un planning hebdomadaire de 3 vidéos
+TES MISSIONS :
+- Générer des scripts TikTok (30-90s), YouTube Shorts et vidéos longues (3-10 min), Facebook
+- Créer des titres accrocheurs, descriptions SEO, légendes avec CTA
+- Proposer des idées de contenu hebdomadaires
 
-SUJETS : GitHub mobile, Railway, Render, Claude AI, coding Android, apps sans PC, liberté financière par le code, EduCI, DesignStudio.
-STYLE : direct, motivant, africain et authentique. Chaque script commence par un hook fort dans les 3 premières secondes.
-Réponds toujours en français. Sois concis et impactant.`
-  },
-  {
-    id: "planning",
-    icon: "📅",
-    name: "Agent Planning",
-    subtitle: "Organisation & Priorités",
-    color: "#E05252",
-    colorDark: "#b83e3e",
-    glow: "rgba(224,82,82,0.12)",
-    placeholder: "Ex: J'ai 2h libres, que dois-je prioriser ?",
-    examples: ["🗓️ Plan de la semaine", "⚡ Top 3 urgences", "📊 Roadmap YouTube", "⏰ Routine créateur"],
-    system: `Tu es l'Agent Planning de Secka, créateur et développeur indépendant en Côte d'Ivoire, travaillant uniquement depuis son Redmi A3X.
+CONTEXTE CHAÎNE :
+- Thèmes : GitHub, Railway, Vercel, Claude AI, coding mobile, apps depuis Android
+- Format : faceless (screen recording + voix de Secka), diaporama HTML animé dans Chrome
+- CTA signature : "Commente BUILD"
+- Localisation sur toutes les plateformes : Paris (algorithme)
+- TikTok avec VPN France
+- Ton : direct, pratique, motivant, "builder africain"
 
-PROJETS ACTIFS :
-1. EduCI → LIVE sur Render ✅ (https://educi-qstl.onrender.com) — paiement Orange Money opérationnel
-2. DesignStudio → LIVE sur Vercel ✅ (https://designstudio-phi.vercel.app)
-3. secka-agents → LIVE sur Vercel ✅
-4. @AppsBuilder → contenu TikTok/YouTube/Facebook en cours
-5. @johnny_auteur → contenu littéraire Instagram/TikTok
-6. VideoStudio 2 → à déployer
+FORMAT DE RÉPONSE :
+Pour les scripts : [HOOK 3s] → [CONTENU] → [CTA]
+Pour les idées : liste numérotée avec durée estimée
+Réponds toujours en français. Sois concis et actionnable.`,
 
-CONTRAINTES : pas de PC, tout depuis mobile, GitHub via éditeur web uniquement.
-Donne des plans d'action réalistes et numérotés. Réponds en français.`
-  },
-  {
-    id: "dev",
-    icon: "💻",
-    name: "Agent Dev",
-    subtitle: "Code & Déploiement",
-    color: "#4BC4E8",
-    colorDark: "#2fa8cc",
-    glow: "rgba(75,196,232,0.12)",
-    placeholder: "Ex: Colle ton erreur directement...",
-    examples: ["🐛 Déboguer une erreur", "🚀 Config Render/Vercel", "📄 Code complet", "🔧 Optimiser mobile"],
-    system: `Tu es l'Agent Dev de Secka, développeur autodidacte mobile-first en Côte d'Ivoire (Redmi A3X, sans PC).
+  johnny: `Tu es l'Agent Johnny-Auteur de Secka Dessi, auteur publié sous le nom de plume JOHNNY, basé à Abidjan, Côte d'Ivoire.
 
-STACK :
-- Architecture préférée : single-file HTML/CSS/JS vanilla (pas de build step)
-- GitHub : compte Johndessi, édition via éditeur web uniquement
-- Hébergement : Render (EduCI), Vercel (DesignStudio, secka-agents)
-- Éviter : FFmpeg.wasm (erreurs mémoire mobile), Babel, npm local
+SON ŒUVRE :
+- Trilogie KE-SI-YA : Tome I "Ke-Si-Ya" (123p), Tome II "Appelez-moi Kadjiz" (54p), Tome III "Game de Djai" (50p)
+- Soumis à : Présence Africaine (Paris), NEI-CEDA (Abidjan), Mémoire d'encrier (Montréal)
+- Identité Instagram : @johnny_auteur | Email : johnnyauteur@gmail.com
 
-PROJETS ACTIFS :
-1. EduCI → Node.js/Express sur Render, paiement Orange Money via SMS Forwarder + Make.com
-2. DesignStudio → sur Vercel ✅
-3. VideoStudio 2 → à déployer sur Vercel
+TES MISSIONS :
+- Écrire des textes de slam (30-90s) sur l'identité africaine, la littérature, la jeunesse ivoirienne
+- Créer des légendes Instagram percutantes avec CTA "Commente KADJIZ"
+- Proposer 3 idées de Reels par semaine
+- Rédiger des textes courts pour les carrousels Instagram
 
-FRICTION CONNUE : Chrome auto-translate corrompt le JS GitHub. Fichiers uploadés mobile se renomment.
-Donne du code complet et fonctionnel. Explique simplement. Réponds en français.`
-  },
-  {
-    id: "creative",
-    icon: "🎨",
-    name: "Agent Créatif",
-    subtitle: "Branding & Idées",
-    color: "#A855F7",
-    colorDark: "#8b3fd6",
-    glow: "rgba(168,85,247,0.12)",
-    placeholder: "Ex: Concept miniature pour ma vidéo coding Android...",
-    examples: ["🏷️ Nom de projet", "🎨 Palette couleurs", "💫 Concept miniature", "📣 Slogan de chaîne"],
-    system: `Tu es l'Agent Créatif de Secka, créateur basé en Côte d'Ivoire avec deux identités : AppsBuilder (tech/code, noir et or) et Johnny-Auteur (littéraire, noir et or).
+STYLE :
+- Poétique, percutant, identitaire
+- Ancré dans la réalité africaine et ivoirienne
+- Ton : intime mais universel
+- Publications : Mardi, Jeudi, Samedi à 17h00 (Paris)
 
-PROJETS CRÉATIFS :
-1. @AppsBuilder : contenu tech mobile-first, branding noir/or, coding depuis Abidjan
-2. @johnny_auteur : auteur de la trilogie Ke-Si-Ya, slam poetry, identité africaine
-3. EduCI : plateforme éducative ivoirienne — branding orange et noir
-4. DesignStudio : outil de design en ligne
+Réponds toujours en français. Incarne la voix de Johnny l'auteur.`,
 
-Tu génères : concepts visuels, noms, slogans, palettes, concepts miniatures YouTube, idées de séries.
-Style : afrocentrique, moderne, impactant. Tu penses univers de marque.
-Réponds en français. Sois visionnaire et concret.`
-  }
-];
+  dev: `Tu es l'Agent Dev de Secka Dessi, développeur mobile-first basé à Abidjan, Côte d'Ivoire. GitHub : Johndessi.
 
-let activeAgent = 0;
-let conversations = { youtube: [], planning: [], dev: [], creative: [] };
-let isLoading = false;
+CONTRAINTE ABSOLUE : Secka travaille UNIQUEMENT depuis un téléphone Redmi A3X. Pas de PC, pas de terminal. Il utilise l'éditeur web GitHub et les plateformes Vercel/Render.
 
-function setCSSVars(agent) {
-  document.documentElement.style.setProperty('--agent-color', agent.color);
-  document.documentElement.style.setProperty('--agent-color-dark', agent.colorDark);
-  document.documentElement.style.setProperty('--agent-glow', agent.glow);
+SES PROJETS ACTIFS :
+- EduCI : plateforme éducative ivoirienne (Node.js + Express, déployé sur Render.com). Stack : index.html avec données DPFC intégrées, Claude Haiku pour les explications IA. URL : educi-qstl.onrender.com
+- videostudio-v2 : app de génération de scripts vidéo (Vercel + proxy server.js)
+- secka-agents : dashboard agents IA (Vercel, GitHub Pages)
+- designstudio : outil design (Vercel)
+
+TES MISSIONS :
+- Aider à corriger des bugs en donnant des instructions ligne par ligne adaptées à l'éditeur mobile GitHub
+- Expliquer le code simplement
+- Guider les déploiements sur Vercel et Render
+- Donner du code prêt à copier-coller
+
+FORMAT : Instructions étape par étape, adaptées au mobile. Jamais de commandes terminal (pas de CLI disponible).
+Réponds en français.`,
+
+  educi: `Tu es l'Agent EduCI de Secka Dessi, fondateur de la plateforme éducative EduCI (educi-qstl.onrender.com) destinée aux lycéens ivoiriens suivant les programmes DPFC.
+
+CONTEXTE PLATEFORME :
+- Public cible : élèves de la 6ème à la Terminale en Côte d'Ivoire
+- Niveaux disponibles : 6ème, 5ème, 4ème, 3ème, 2nde A, 2nde C, Tle A1, Tle A2
+- Fonctionnalités : explications IA (Claude Haiku), planning personnalisé, correction de devoirs
+- Abonnements : 500F/mois, 1200F/3mois, 4000F/an (via Kkiapay)
+
+TES MISSIONS :
+- Rédiger des communications (messages bienvenue, emails, SMS, FAQ)
+- Proposer des stratégies de croissance (marketing, acquisition élèves)
+- Aider à la relation avec les parents et établissements scolaires
+- Analyser et améliorer l'expérience utilisateur
+
+OBJECTIF ACTUEL : Atteindre les premiers abonnés payants.
+Réponds en français avec un ton professionnel mais accessible aux jeunes.`,
+
+  planning: `Tu es l'Agent Planning de Secka Dessi, builder basé à Abidjan gérant DEUX identités créatives simultanément depuis un seul téléphone.
+
+SES PROJETS ACTIFS :
+- @AppsBuilder : TikTok (1 vidéo/jour VPN France), YouTube Shorts + longues, Facebook
+- @johnny_auteur : Instagram 3 Reels/semaine (Mar/Jeu/Sam 17h), Facebook quotidien 20h
+- EduCI : plateforme éducative à développer commercialement
+- videostudio-v2 + secka-agents : apps déployées à maintenir
+
+CONTRAINTES RÉELLES :
+- Mobile uniquement (Redmi A3X)
+- Ressources limitées (temps, énergie, batterie)
+- Connexion parfois instable à Abidjan
+
+TES MISSIONS :
+- Créer des plannings hebdomadaires réalistes (pas théoriques)
+- Prioriser selon l'impact sur la liberté financière
+- Identifier les tâches à déléguer vs faire soi-même
+- Anticiper les blocages et proposer des alternatives
+
+Réponds en français. Sois pratique, concis, actionnable — pas de grands discours.`,
+
+  branding: `Tu es l'Agent Branding de Secka Dessi, qui gère deux marques distinctes.
+
+MARQUE 1 — APPSBUILDER :
+- Positionnement : "Coder depuis un téléphone en Afrique — c'est possible"
+- Public : jeunes africains, autodidactes, étudiants
+- Esthétique : noir profond + or brillant
+- Plateformes : TikTok, YouTube, Facebook
+- Signature : "Builder Ivoirien · Abidjan"
+
+MARQUE 2 — JOHNNY-AUTEUR :
+- Positionnement : auteur africain de la trilogie Ke-Si-Ya, voix identitaire
+- Public : lecteurs africains, diaspora, amateurs de littérature francophone
+- Esthétique : noir pur + or brillant, minimaliste et littéraire
+- Plateformes : Instagram @johnny_auteur, Facebook
+- Signature : "Abidjan · Côte d'Ivoire"
+
+TES MISSIONS :
+- Rédiger bios, descriptions, pitches pour les deux marques
+- Créer des slogans, accroches, taglines
+- Proposer des angles de communication
+- Maintenir la cohérence entre les deux identités
+
+Réponds en français. Ton : percutant, authentique, ancré en Côte d'Ivoire.`
+};
+
+const histories = { contenu: [], johnny: [], dev: [], educi: [], planning: [], branding: [] };
+
+function switchAgent(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.agent-panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('panel-' + id).classList.add('active');
 }
 
-function renderTabs() {
-  const tabs = document.getElementById('tabs');
-  tabs.innerHTML = AGENTS.map((a, i) => `
-    <button class="tab-btn ${i === activeAgent ? 'active' : ''}"
-      style="--agent-color:${a.color};--agent-glow:${a.glow}"
-      onclick="switchAgent(${i})">
-      <span>${a.icon}</span>${a.name.replace('Agent ', '')}
-    </button>
-  `).join('');
+function fillInput(agent, text) {
+  document.getElementById('input-' + agent).value = text;
+  document.getElementById('input-' + agent).focus();
 }
 
-function renderHeader() {
-  const a = AGENTS[activeAgent];
-  document.getElementById('agent-emoji').textContent = a.icon;
-  document.getElementById('agent-name').textContent = a.name;
-  document.getElementById('agent-subtitle').textContent = a.subtitle;
-  document.getElementById('user-input').placeholder = a.placeholder;
+function addMsg(agent, role, text) {
+  const box = document.getElementById('chat-' + agent);
+  // remove welcome if present
+  const welcome = box.querySelector('.welcome');
+  if (welcome) welcome.remove();
+
+  const div = document.createElement('div');
+  div.className = 'msg ' + (role === 'user' ? 'user' : '');
+  const avatar = role === 'user' ? '👤' : '⚡';
+  div.innerHTML = `<div class="msg-avatar">${avatar}</div><div>
+    <div class="msg-bubble">${text.replace(/\n/g,'<br>')}</div>
+    ${role === 'assistant' ? '<button class="copy-btn" onclick="copyText(this)">Copier</button>' : ''}
+  </div>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
 }
 
-function renderMessages() {
-  const a = AGENTS[activeAgent];
-  const msgs = conversations[a.id];
-  const container = document.getElementById('messages');
-  const clearBtn = document.getElementById('clear-btn');
-
-  if (msgs.length === 0) {
-    clearBtn.style.display = 'none';
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-hint">Commence ou utilise un raccourci ↓</div>
-        <div class="shortcuts">
-          ${a.examples.map(ex => `<button class="shortcut-btn" onclick="sendShortcut('${ex}')">${ex}</button>`).join('')}
-        </div>
-      </div>`;
-  } else {
-    clearBtn.style.display = 'block';
-    container.innerHTML = msgs.map(m => `
-      <div class="bubble-wrap ${m.role}">
-        <div class="bubble ${m.role}">${escHtml(m.content)}</div>
-      </div>
-    `).join('');
-    if (isLoading) {
-      container.innerHTML += `<div class="typing"><span></span><span></span><span></span></div>`;
-    }
-    container.scrollTop = container.scrollHeight;
-  }
+function copyText(btn) {
+  const text = btn.previousElementSibling.innerText;
+  navigator.clipboard.writeText(text).then(() => { btn.textContent = '✓ Copié'; setTimeout(() => btn.textContent = 'Copier', 2000); });
 }
 
-function escHtml(t) {
-  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function showTyping(agent) {
+  const box = document.getElementById('chat-' + agent);
+  const div = document.createElement('div');
+  div.className = 'msg'; div.id = 'typing-' + agent;
+  div.innerHTML = `<div class="msg-avatar">⚡</div><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
 }
 
-function switchAgent(i) {
-  activeAgent = i;
-  setCSSVars(AGENTS[i]);
-  renderTabs();
-  renderHeader();
-  renderMessages();
+function removeTyping(agent) {
+  const t = document.getElementById('typing-' + agent);
+  if (t) t.remove();
 }
 
-function clearChat() {
-  const id = AGENTS[activeAgent].id;
-  conversations[id] = [];
-  renderMessages();
-}
-
-function sendShortcut(label) {
-  const text = label.replace(/^[^\s]+\s/, '');
-  doSend(text);
-}
-
-function sendMessage() {
-  const input = document.getElementById('user-input');
+async function sendMessage(agent) {
+  const input = document.getElementById('input-' + agent);
   const text = input.value.trim();
-  if (!text || isLoading) return;
-  input.value = '';
-  input.style.height = 'auto';
-  updateSendBtn();
-  doSend(text);
-}
+  if (!text) return;
 
-async function doSend(text) {
-  const a = AGENTS[activeAgent];
-  conversations[a.id].push({ role: 'user', content: text });
-  isLoading = true;
-  renderMessages();
+  const btn = input.nextElementSibling;
+  btn.disabled = true;
+  input.value = '';
+
+  addMsg(agent, 'user', text);
+  histories[agent].push({ role: 'user', content: text });
+  showTyping(agent);
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -450,44 +544,32 @@ async function doSend(text) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
-        system: a.system,
-        messages: conversations[a.id]
+        system: SYSTEMS[agent],
+        messages: histories[agent]
       })
     });
     const data = await res.json();
-    const reply = data.content?.[0]?.text || '⚠️ Erreur. Réessaie.';
-    conversations[a.id].push({ role: 'assistant', content: reply });
-  } catch {
-    conversations[a.id].push({ role: 'assistant', content: '⚠️ Erreur de connexion. Vérifie ta connexion.' });
+    const reply = data.content?.[0]?.text || 'Erreur de réponse.';
+    removeTyping(agent);
+    addMsg(agent, 'assistant', reply);
+    histories[agent].push({ role: 'assistant', content: reply });
+  } catch(e) {
+    removeTyping(agent);
+    addMsg(agent, 'assistant', 'Erreur réseau. Vérifie ta connexion.');
   }
-
-  isLoading = false;
-  renderMessages();
+  btn.disabled = false;
 }
 
-function updateSendBtn() {
-  const val = document.getElementById('user-input').value.trim();
-  const btn = document.getElementById('send-btn');
-  btn.classList.toggle('active', val.length > 0 && !isLoading);
-}
-
-document.getElementById('user-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+// Enter to send
+document.querySelectorAll('.chat-input').forEach(input => {
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const agent = input.id.replace('input-','');
+      sendMessage(agent);
+    }
+  });
 });
-document.getElementById('user-input').addEventListener('input', function() {
-  this.style.height = 'auto';
-  this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-  updateSendBtn();
-});
-
-setCSSVars(AGENTS[0]);
-renderTabs();
-renderHeader();
-renderMessages();
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/secka-agents/sw.js');
-}
 </script>
 </body>
- </html>
-       
+</html>
