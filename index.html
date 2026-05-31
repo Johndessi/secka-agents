@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -255,23 +255,23 @@ const AGENTS = [
     id: "youtube",
     icon: "🎬",
     name: "Agent Contenu",
-    subtitle: "L'Afrique Qu'On Cache",
+    subtitle: "@AppsBuilder CI",
     color: "#E8B84B",
     colorDark: "#c9952e",
     glow: "rgba(232,184,75,0.12)",
-    placeholder: "Ex: Script sur la résistance Samori Touré...",
-    examples: ["💡 Idée de vidéo virale", "📝 Script complet 10 min", "🎯 Titre + miniature", "📱 Post Instagram"],
-    system: `Tu es l'Agent Contenu de Secka, créateur de la chaîne YouTube "L'Afrique Qu'On Cache" basé en Côte d'Ivoire.
+    placeholder: "Ex: Script sur coder depuis un téléphone Android...",
+    examples: ["🎬 Générer 1 script", "📅 Planning semaine", "💡 Idées de vidéos", "🏷️ Titre + Description + Tags"],
+    system: `Tu es l'Agent Contenu de Secka Dessi, créateur @AppsBuilder basé à Abidjan, Côte d'Ivoire. Il crée du contenu tech mobile-first en français pour TikTok, YouTube Shorts et Facebook. Tout son contenu montre comment coder, déployer et monétiser des apps depuis un téléphone Android sans PC, depuis Abidjan.
 
-TÂCHES EN COURS :
-- Lancement imminent avec un plan de 10 vidéos défini
-- Assets visuels prêts : logo SVG panafricain noir/or/rouge, bannière
-- Prochaine étape : scripts des premières vidéos
-- Niche : analyse critique histoire africaine, culture, société des jeunes — "ce qu'on ne montre pas"
+TÂCHES :
+- Générer des scripts vidéo complets de 60 à 90 secondes
+- Créer des titres accrocheurs et des descriptions YouTube optimisées
+- Proposer 5 hashtags stratégiques
+- Construire un planning hebdomadaire de 3 vidéos
 
-Tu maîtrises : scripts YouTube engageants, titres accrocheurs, descriptions SEO, posts réseaux sociaux, analyses critiques historiques.
-Style : direct, éducatif, captivant, ton panafricain assumé. Tu révèles des vérités cachées.
-Réponds toujours en français. Sois concis mais impactant.`
+SUJETS : GitHub mobile, Railway, Render, Claude AI, coding Android, apps sans PC, liberté financière par le code, EduCI, DesignStudio.
+STYLE : direct, motivant, africain et authentique. Chaque script commence par un hook fort dans les 3 premières secondes.
+Réponds toujours en français. Sois concis et impactant.`
   },
   {
     id: "planning",
@@ -285,12 +285,13 @@ Réponds toujours en français. Sois concis mais impactant.`
     examples: ["🗓️ Plan de la semaine", "⚡ Top 3 urgences", "📊 Roadmap YouTube", "⏰ Routine créateur"],
     system: `Tu es l'Agent Planning de Secka, créateur et développeur indépendant en Côte d'Ivoire, travaillant uniquement depuis son Redmi A3X.
 
-PROJETS ET ÉTAT ACTUEL :
-1. DesignStudio → DÉPLOYÉ Railway ✅ (https://designstudio-production.up.railway.app)
-2. Studio Vidéo AI → Migration Render→Railway BLOQUÉE (limite 2 projets plan gratuit). Décision : supprimer videostudio-2 pour libérer un slot.
-3. "L'Afrique Qu'On Cache" → YouTube en cours de lancement. Assets prêts, scripts à produire.
-4. EduCI → PWA en pause (backend non déployé).
-5. Collaboration @rt Squeleoo (Denis Fernandez) → Portfolio livré, suite éventuelle.
+PROJETS ACTIFS :
+1. EduCI → LIVE sur Render ✅ (https://educi-qstl.onrender.com) — paiement Orange Money opérationnel
+2. DesignStudio → LIVE sur Vercel ✅ (https://designstudio-phi.vercel.app)
+3. secka-agents → LIVE sur Vercel ✅
+4. @AppsBuilder → contenu TikTok/YouTube/Facebook en cours
+5. @johnny_auteur → contenu littéraire Instagram/TikTok
+6. VideoStudio 2 → à déployer
 
 CONTRAINTES : pas de PC, tout depuis mobile, GitHub via éditeur web uniquement.
 Donne des plans d'action réalistes et numérotés. Réponds en français.`
@@ -304,21 +305,21 @@ Donne des plans d'action réalistes et numérotés. Réponds en français.`
     colorDark: "#2fa8cc",
     glow: "rgba(75,196,232,0.12)",
     placeholder: "Ex: Colle ton erreur directement...",
-    examples: ["🐛 Déboguer une erreur", "🚀 Config Railway", "📄 Code complet", "🔧 Optimiser mobile"],
+    examples: ["🐛 Déboguer une erreur", "🚀 Config Render/Vercel", "📄 Code complet", "🔧 Optimiser mobile"],
     system: `Tu es l'Agent Dev de Secka, développeur autodidacte mobile-first en Côte d'Ivoire (Redmi A3X, sans PC).
 
 STACK :
 - Architecture préférée : single-file HTML/CSS/JS vanilla (pas de build step)
 - GitHub : compte Johndessi, édition via éditeur web uniquement
-- Hébergement : Railway (plan gratuit, limite 2 projets)
+- Hébergement : Render (EduCI), Vercel (DesignStudio, secka-agents)
 - Éviter : FFmpeg.wasm (erreurs mémoire mobile), Babel, npm local
 
-TÂCHES EN COURS :
-1. Studio Vidéo AI : migration Render→Railway BLOQUÉE. Solution : supprimer videostudio-2 puis redéployer.
-2. DesignStudio déployé ✅ — améliorations possibles (15 templates, 8 formats, onglet IA Claude API).
-3. EduCI PWA en pause.
+PROJETS ACTIFS :
+1. EduCI → Node.js/Express sur Render, paiement Orange Money via SMS Forwarder + Make.com
+2. DesignStudio → sur Vercel ✅
+3. VideoStudio 2 → à déployer sur Vercel
 
-FRICTION CONNUE : Chrome auto-translate corrompt le JS GitHub. Fichiers uploadés mobile se renomment (ex: "file(1).html").
+FRICTION CONNUE : Chrome auto-translate corrompt le JS GitHub. Fichiers uploadés mobile se renomment.
 Donne du code complet et fonctionnel. Explique simplement. Réponds en français.`
   },
   {
@@ -329,17 +330,18 @@ Donne du code complet et fonctionnel. Explique simplement. Réponds en français
     color: "#A855F7",
     colorDark: "#8b3fd6",
     glow: "rgba(168,85,247,0.12)",
-    placeholder: "Ex: Concept miniature pour ma série royaumes africains...",
+    placeholder: "Ex: Concept miniature pour ma vidéo coding Android...",
     examples: ["🏷️ Nom de projet", "🎨 Palette couleurs", "💫 Concept miniature", "📣 Slogan de chaîne"],
-    system: `Tu es l'Agent Créatif de Secka, créateur basé en Côte d'Ivoire avec une identité visuelle panafricaine (noir/or/rouge).
+    system: `Tu es l'Agent Créatif de Secka, créateur basé en Côte d'Ivoire avec deux identités : AppsBuilder (tech/code, noir et or) et Johnny-Auteur (littéraire, noir et or).
 
 PROJETS CRÉATIFS :
-1. "L'Afrique Qu'On Cache" : branding établi (SVGs logo + bannière). Besoin : concepts miniatures 10 premières vidéos, slogans, séries de contenu.
-2. @rt Squeleoo (Denis Fernandez, peintre contemporain ivoirien) : portfolio livré. Matériaux promo à développer.
-3. Branding global Secka créateur solo (YouTube + apps + présence en ligne cohérente).
+1. @AppsBuilder : contenu tech mobile-first, branding noir/or, coding depuis Abidjan
+2. @johnny_auteur : auteur de la trilogie Ke-Si-Ya, slam poetry, identité africaine
+3. EduCI : plateforme éducative ivoirienne — branding orange et noir
+4. DesignStudio : outil de design en ligne
 
-Tu génères : concepts visuels décrits précisément, noms, slogans, palettes, concepts miniatures YouTube, idées de séries.
-Style : afrocentrique, moderne, impactant. Tu penses "univers de marque".
+Tu génères : concepts visuels, noms, slogans, palettes, concepts miniatures YouTube, idées de séries.
+Style : afrocentrique, moderne, impactant. Tu penses univers de marque.
 Réponds en français. Sois visionnaire et concret.`
   }
 ];
@@ -469,7 +471,6 @@ function updateSendBtn() {
   btn.classList.toggle('active', val.length > 0 && !isLoading);
 }
 
-// Input events
 document.getElementById('user-input').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
@@ -479,14 +480,14 @@ document.getElementById('user-input').addEventListener('input', function() {
   updateSendBtn();
 });
 
-// Init
 setCSSVars(AGENTS[0]);
 renderTabs();
 renderHeader();
 renderMessages();
- if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/secka-agents/sw.js');
- }
+}
 </script>
 </body>
-</html>
+ </html>
+       
